@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/Mymuduo.dir/main.cpp.o CMakeFiles/Mymuduo.dir/TimeWheel.cpp.o CMakeFiles/Mymuduo.dir/Timer.cpp.o -o Mymuduo 
