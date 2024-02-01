@@ -129,6 +129,30 @@ Mymuduo/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Mymuduo.dir/build.make CMakeFiles/Mymuduo.dir/build
 .PHONY : Mymuduo/fast
 
+Any.o: Any.cpp.o
+.PHONY : Any.o
+
+# target to build an object file
+Any.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Mymuduo.dir/build.make CMakeFiles/Mymuduo.dir/Any.cpp.o
+.PHONY : Any.cpp.o
+
+Any.i: Any.cpp.i
+.PHONY : Any.i
+
+# target to preprocess a source file
+Any.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Mymuduo.dir/build.make CMakeFiles/Mymuduo.dir/Any.cpp.i
+.PHONY : Any.cpp.i
+
+Any.s: Any.cpp.s
+.PHONY : Any.s
+
+# target to generate assembly for a file
+Any.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Mymuduo.dir/build.make CMakeFiles/Mymuduo.dir/Any.cpp.s
+.PHONY : Any.cpp.s
+
 TimeWheel.o: TimeWheel.cpp.o
 .PHONY : TimeWheel.o
 
@@ -210,6 +234,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... Mymuduo"
+	@echo "... Any.o"
+	@echo "... Any.i"
+	@echo "... Any.s"
 	@echo "... TimeWheel.o"
 	@echo "... TimeWheel.i"
 	@echo "... TimeWheel.s"

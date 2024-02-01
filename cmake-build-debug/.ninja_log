@@ -1,5 +1,5 @@
 # ninja log v5
 1	311	1706768989517565900	CMakeFiles/Mymuduo.dir/Timer.cpp.o	b13b240f48b687c5
-0	364	1706768989570682632	CMakeFiles/Mymuduo.dir/main.cpp.o	582b3ab1a2a7eed9
+3	562	1706775171897261523	CMakeFiles/Mymuduo.dir/main.cpp.o	582b3ab1a2a7eed9
 1	387	1706768989594017277	CMakeFiles/Mymuduo.dir/TimeWheel.cpp.o	c10f63d09d7e46da
-387	421	1706768989628769434	Mymuduo	1fe46e9661e9436d
+562	590	1706775171926085893	Mymuduo	1fe46e9661e9436d

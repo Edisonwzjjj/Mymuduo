@@ -1,7 +1,3 @@
-//
-// Created by ZIJUN WANG on 1/2/2024.
-//
-
 #include "TimeWheel.h"
 
 

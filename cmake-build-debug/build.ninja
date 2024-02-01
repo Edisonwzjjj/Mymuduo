@@ -67,6 +67,12 @@ build CMakeFiles/Mymuduo.dir/Timer.cpp.o: CXX_COMPILER__Mymuduo_unscanned_Debug 
   OBJECT_DIR = CMakeFiles/Mymuduo.dir
   OBJECT_FILE_DIR = CMakeFiles/Mymuduo.dir
 
+build CMakeFiles/Mymuduo.dir/Any.cpp.o: CXX_COMPILER__Mymuduo_unscanned_Debug /Users/wzj/CLionProjects/Mymuduo/Any.cpp || cmake_object_order_depends_target_Mymuduo
+  DEP_FILE = CMakeFiles/Mymuduo.dir/Any.cpp.o.d
+  FLAGS = -g -std=gnu++2b -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -fcolor-diagnostics
+  OBJECT_DIR = CMakeFiles/Mymuduo.dir
+  OBJECT_FILE_DIR = CMakeFiles/Mymuduo.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target Mymuduo
@@ -75,7 +81,7 @@ build CMakeFiles/Mymuduo.dir/Timer.cpp.o: CXX_COMPILER__Mymuduo_unscanned_Debug 
 #############################################
 # Link the executable Mymuduo
 
-build Mymuduo: CXX_EXECUTABLE_LINKER__Mymuduo_Debug CMakeFiles/Mymuduo.dir/main.cpp.o CMakeFiles/Mymuduo.dir/TimeWheel.cpp.o CMakeFiles/Mymuduo.dir/Timer.cpp.o
+build Mymuduo: CXX_EXECUTABLE_LINKER__Mymuduo_Debug CMakeFiles/Mymuduo.dir/main.cpp.o CMakeFiles/Mymuduo.dir/TimeWheel.cpp.o CMakeFiles/Mymuduo.dir/Timer.cpp.o CMakeFiles/Mymuduo.dir/Any.cpp.o
   FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk
   OBJECT_DIR = CMakeFiles/Mymuduo.dir
   POST_BUILD = :
