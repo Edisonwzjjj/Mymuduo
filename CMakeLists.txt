@@ -12,4 +12,6 @@ add_executable(Mymuduo main.cpp
         Buffer.hpp
         Log.hpp
         Socket.hpp
+        Channel.hpp
+        Poller.hpp
 )
