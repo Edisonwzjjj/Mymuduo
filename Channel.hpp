@@ -5,9 +5,12 @@
 #ifndef MYMUDUO_CHANNEL_HPP
 #define MYMUDUO_CHANNEL_HPP
 
+#include "Poller.hpp"
 #include <cstdint>
 #include <functional>
 #include <sys/epoll.h>
+
+class Poller;
 
 class Channel {
 private:
@@ -16,6 +19,8 @@ private:
     uint32_t events_{};
     //连接的事件
     uint32_t revents_{};
+    Poller *poller_;
+
     using EventCallback = std::function<void()>;
     EventCallback read_callback_;
     EventCallback write_callback_;
@@ -23,61 +28,40 @@ private:
     EventCallback error_callback_;
     EventCallback event_callback_;
 public:
-    explicit Channel(int fd) : fd_(fd) {}
+    explicit Channel(int fd, Poller *poller) : fd_(fd), poller_(poller) {}
 
-    int Fd() {
-        return fd_;
-    }
+    int Fd() { return fd_; }
 
-    void SetRead(const EventCallback &cb) {
-        read_callback_ = cb;
-    }
+    uint32_t GetEvents() { return events_; }
 
-    void SetWrite(const EventCallback &cb) {
-        write_callback_ = cb;
-    }
+    void SetREvents(uint32_t ev) { revents_ = ev; }
 
-    void SetClose(const EventCallback &cb) {
-        close_callback_ = cb;
-    }
+    void SetReadCb(const EventCallback &cb) { read_callback_ = cb; }
 
-    void SetError(const EventCallback &cb) {
-        error_callback_ = cb;
-    }
+    void SetWriteCb(const EventCallback &cb) { write_callback_ = cb; }
 
-    void SetEvent(const EventCallback &cb) {
-        event_callback_ = cb;
-    }
+    void SetCloseCb(const EventCallback &cb) { close_callback_ = cb; }
 
-    bool CanRead() {
-        return events_ & EPOLLIN;
-    }
+    void SetErrorCb(const EventCallback &cb) { error_callback_ = cb; }
 
-    bool CanWrite() {
-        return events_ & EPOLLOUT;
-    }
+    void SetEventCb(const EventCallback &cb) { event_callback_ = cb; }
 
-    void EnableRead() {
-        events_ |= EPOLLIN;
-    }
+    bool CanRead() { return events_ & EPOLLIN; }
 
-    void EnableWrite() {
-        events_ |= EPOLLOUT;
-    }
+    bool CanWrite() { return events_ & EPOLLOUT; }
 
-    void DisableRead() {
-        events_ &= ~EPOLLIN;
-    }
+    void EnableRead() { events_ |= EPOLLIN; Update(); }
 
-    void DisableWrite() {
-        events_ &= ~EPOLLOUT;
-    }
+    void EnableWrite() { events_ |= EPOLLOUT; Update(); }
 
-    void DisableAll() {
-        events_ = 0;
-    }
+    void DisableRead() { events_ &= ~EPOLLIN; Update(); }
+
+    void DisableWrite() { events_ &= ~EPOLLOUT; Update(); }
+
+    void DisableAll() { events_ = 0; Update(); }
 
     void Remove();
+    void Update();
 
     void HandleEvent() {
         if ((revents_ & EPOLLIN) || (revents_ & EPOLLHUP) || (revents_ & EPOLLPRI)) {

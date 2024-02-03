@@ -28,7 +28,7 @@ class Socket {
             // int socket(int domain, int type, int protocol)
             _sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
             if (_sockfd < 0) {
-                ERROR_LOG("CREATE SOCKET FAILED!!");
+                ERR_LOG("CREATE SOCKET FAILED!!");
                 return false;
             }
             return true;
@@ -43,7 +43,7 @@ class Socket {
             // int bind(int sockfd, struct sockaddr*addr, socklen_t len);
             int ret = bind(_sockfd, (struct sockaddr*)&addr, len);
             if (ret < 0) {
-                ERROR_LOG("BIND ADDRESS FAILED!");
+                ERR_LOG("BIND ADDRESS FAILED!");
                 return false;
             }
             return true;
@@ -53,7 +53,7 @@ class Socket {
             // int listen(int backlog)
             int ret = listen(_sockfd, backlog);
             if (ret < 0) {
-                ERROR_LOG("SOCKET LISTEN FAILED!");
+                ERR_LOG("SOCKET LISTEN FAILED!");
                 return false;
             }
             return true;
@@ -68,7 +68,7 @@ class Socket {
             // int connect(int sockfd, struct sockaddr*addr, socklen_t len);
             int ret = connect(_sockfd, (struct sockaddr*)&addr, len);
             if (ret < 0) {
-                ERROR_LOG("CONNECT SERVER FAILED!");
+                ERR_LOG("CONNECT SERVER FAILED!");
                 return false;
             }
             return true;
@@ -78,7 +78,7 @@ class Socket {
             // int accept(int sockfd, struct sockaddr *addr, socklen_t *len);
             int newfd = accept(_sockfd, NULL, NULL);
             if (newfd < 0) {
-                ERROR_LOG("SOCKET ACCEPT FAILED!");
+                ERR_LOG("SOCKET ACCEPT FAILED!");
                 return -1;
             }
             return newfd;
@@ -93,7 +93,7 @@ class Socket {
                 if (errno == EAGAIN || errno == EINTR) {
                     return 0;//表示这次接收没有接收到数据
                 }
-                ERROR_LOG("SOCKET RECV FAILED!!");
+                ERR_LOG("SOCKET RECV FAILED!!");
                 return -1;
             }
             return ret; //实际接收的数据长度
@@ -109,7 +109,7 @@ class Socket {
                 if (errno == EAGAIN || errno == EINTR) {
                     return 0;
                 }
-                ERROR_LOG("SOCKET SEND FAILED!!");
+                ERR_LOG("SOCKET SEND FAILED!!");
                 return -1;
             }
             return ret;//实际发送的数据长度
