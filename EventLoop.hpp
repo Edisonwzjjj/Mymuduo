@@ -7,6 +7,7 @@
 
 #include "Poller.hpp"
 #include "Channel.hpp"
+#include "TimeWheel.hpp"
 #include <sys/eventfd.h>
 #include <functional>
 #include <mutex>

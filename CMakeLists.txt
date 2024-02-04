@@ -4,10 +4,7 @@ project(Mymuduo)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(Mymuduo
-        TimeWheel.cpp
-        TimeWheel.h
-        Timer.cpp
-        Timer.h
+        main.cpp
         Any.hpp
         Buffer.hpp
         Log.hpp
@@ -15,6 +12,8 @@ add_executable(Mymuduo
         Channel.hpp
         Poller.hpp
         EventLoop.hpp
+        Timer.hpp
+        TimeWheel.hpp
         #        server.cpp
 #        client.cpp
 )
