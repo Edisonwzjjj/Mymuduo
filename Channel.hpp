@@ -5,7 +5,7 @@
 #ifndef MYMUDUO_CHANNEL_HPP
 #define MYMUDUO_CHANNEL_HPP
 
-#include "Poller.hpp"
+
 #include <cstdint>
 #include <functional>
 #include <sys/epoll.h>
