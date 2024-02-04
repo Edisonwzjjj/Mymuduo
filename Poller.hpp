@@ -17,6 +17,7 @@
 
 class Channel;
 
+
 class Poller {
 
 private:
@@ -86,7 +87,6 @@ public:
     }
 };
 
-void Channel::Remove() { poller_->RemoveEvent(this); }
-void Channel::Update() { poller_->UpdateEvent(this); }
+
 
 #endif //MYMUDUO_POLLER_HPP

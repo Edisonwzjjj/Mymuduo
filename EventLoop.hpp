@@ -6,6 +6,7 @@
 #define MYMUDUO_EVENTLOOP_HPP
 
 #include "Poller.hpp"
+#include "Channel.hpp"
 #include <sys/eventfd.h>
 #include <functional>
 #include <mutex>
@@ -15,6 +16,8 @@
 //eventfd(unsigned int init, int flags)
 // flag: EFD_CLOEXEC EFD_NONBLOCK
 //read&&write should be 8 bytes
+
+class Channel;
 
 class EventLoop {
 private:
@@ -75,7 +78,7 @@ public:
 
 public:
     EventLoop() : thread_id_(std::this_thread::get_id()), event_fd_(CreateEventFd()) {
-        event_channel_ = std::make_unique<Channel>(event_fd_, &poller_);
+        event_channel_ = std::make_unique<Channel>(event_fd_, this);
         event_channel_->SetReadCb([this] { return ReadEventFd(); });
         event_channel_->EnableRead();
     }
@@ -116,8 +119,9 @@ public:
     void RemoveEvent(Channel *channel) {
         poller_.RemoveEvent(channel);
     }
-
-
 };
+
+void Channel::Remove() { loop_->RemoveEvent(this); }
+void Channel::Update() { loop_->UpdateEvent(this); }
 
 #endif //MYMUDUO_EVENTLOOP_HPP

@@ -10,7 +10,8 @@
 #include <functional>
 #include <sys/epoll.h>
 
-class Poller;
+class EventLoop;
+
 
 class Channel {
 private:
@@ -19,7 +20,7 @@ private:
     uint32_t events_{};
     //连接的事件
     uint32_t revents_{};
-    Poller *poller_;
+    EventLoop *loop_;
 
     using EventCallback = std::function<void()>;
     EventCallback read_callback_;
@@ -28,7 +29,7 @@ private:
     EventCallback error_callback_;
     EventCallback event_callback_;
 public:
-    explicit Channel(int fd, Poller *poller) : fd_(fd), poller_(poller) {}
+    explicit Channel(int fd, EventLoop *loop) : fd_(fd), loop_(loop) {}
 
     int Fd() { return fd_; }
 
