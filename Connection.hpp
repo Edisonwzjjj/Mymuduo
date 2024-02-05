@@ -18,7 +18,7 @@ enum class ConnState {
 };
 
 
-class Connection: public std::enable_shared_from_this<Connection> {
+class Connection : public std::enable_shared_from_this<Connection> {
 private:
     uint64_t conn_id_;
     int sock_fd_;
@@ -61,6 +61,17 @@ private:
         }
     }
 
+    void HandleWrite() {
+
+        ssize_t st = sock_.NonBlockSend(out_buf_.ReadPos(), out_buf_.ReadableSize());
+        if (st < 0) {
+            if (in_buf_.ReadableSize() > 0) {
+                message_cb_(shared_from_this(), in_buf_);
+            }
+            Release();
+        }
+    }
+
     void SendInLoop(const std::string &data) {
 
     }
@@ -80,6 +91,14 @@ private:
     void UpgradeInLoop(const std::any &context, const ConnectedCb &conn, const MessageCb &msg,
                        const ClosedCb &close, const AnyCb &any) {
 
+    }
+
+    void ReleaseInLoop() {
+        state_ = ConnState::DISCONNECTED;
+        channel.Remove();
+        sock_.Close();
+
+        if (loop_.Has)
     }
 
 public:
@@ -120,6 +139,10 @@ public:
 
     void Upgrade(const std::any &context, const ConnectedCb &conn, const MessageCb &msg,
                  const ClosedCb &close, const AnyCb &any); //切换协议， 重置context
+
+    void Release() {
+        loop_->RunInLoop([this] { ReleaseInLoop(); });
+    }
 };
 
 

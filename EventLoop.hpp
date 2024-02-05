@@ -18,7 +18,7 @@
 // flag: EFD_CLOEXEC EFD_NONBLOCK
 //read&&write should be 8 bytes
 
-class Channel;
+
 
 class EventLoop {
 private:
@@ -30,6 +30,8 @@ private:
     using Functor = std::function<void()>;
     std::vector<Functor> tasks_;
     std::mutex mutex_;
+
+    TimeWheel time_wheel_;
 public:
     void RunAllTask() {
         std::vector<Functor> tasks;
@@ -78,7 +80,7 @@ public:
     }
 
 public:
-    EventLoop() : thread_id_(std::this_thread::get_id()), event_fd_(CreateEventFd()) {
+    EventLoop() : thread_id_(std::this_thread::get_id()), event_fd_(CreateEventFd()), time_wheel_(this) {
         event_channel_ = std::make_unique<Channel>(event_fd_, this);
         event_channel_->SetReadCb([this] { return ReadEventFd(); });
         event_channel_->EnableRead();
