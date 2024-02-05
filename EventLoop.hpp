@@ -122,6 +122,14 @@ public:
     void RemoveEvent(Channel *channel) {
         poller_.RemoveEvent(channel);
     }
+
+    bool HasTimer(uint64_t id) {
+        return time_wheel_.HasTimer(id);
+    }
+
+    void TimerRefresh(uint64_t id) {
+        time_wheel_.TimerRefresh(id);
+    }
 };
 
 void Channel::Remove() { loop_->RemoveEvent(this); }

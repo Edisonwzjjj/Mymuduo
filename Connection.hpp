@@ -42,9 +42,10 @@ private:
 
     using ClosedCb = std::function<void(const SharedConnection &)>;
     ClosedCb close_cb_;
+    ClosedCb server_close_cb;
 
     using AnyCb = std::function<void(const SharedConnection &)>;
-    AnyCb any_cb;
+    AnyCb event_cb_;
 
 
 private:
@@ -62,29 +63,86 @@ private:
     }
 
     void HandleWrite() {
-
         ssize_t st = sock_.NonBlockSend(out_buf_.ReadPos(), out_buf_.ReadableSize());
+        auto str = out_buf_.Read(out_buf_.ReadableSize());
         if (st < 0) {
             if (in_buf_.ReadableSize() > 0) {
                 message_cb_(shared_from_this(), in_buf_);
             }
             Release();
         }
+
+        if (!out_buf_.ReadableSize()) {
+            channel.DisableWrite();
+            if (state_ == ConnState::DISCONNECTING) {
+                Release();
+            }
+        }
+    }
+
+    void HandleClose() {
+        if (in_buf_.ReadableSize()) {
+            message_cb_(shared_from_this(), in_buf_);
+        }
+        Release();
+    }
+
+    void HandleError() {
+        HandleClose();
+    }
+
+    void HandleEvent() {
+        //延时定时器 调用者的函数
+        if (enable_inactive_release_) {
+            loop_->TimerRefresh(conn_id_);
+        }
+
+        if (event_cb_) {
+            event_cb_(shared_from_this());
+        }
+    }
+
+    void EstablishLoop() {
+        assert(state_ == ConnState::CONNECTING);
+        state_ = ConnState::CONNECTED;
+        channel.EnableRead();
+        if (connected_cb_) {
+            connected_cb_(shared_from_this());
+        }
     }
 
     void SendInLoop(const std::string &data) {
-
+        if (state_ == ConnState::DISCONNECTED) {
+            return;
+        }
+        out_buf_.Write(data);
+        if (!channel.CanWrite()) {
+            channel.EnableWrite();
+        }
     }
 
     void ShutDownInLoop() {
+        state_ = ConnState::DISCONNECTING;
+        if (in_buf_.ReadableSize()) {
+            message_cb_(shared_from_this(), in_buf_);
+        }
 
+        if (out_buf_.ReadableSize()) {
+            if (!channel.CanWrite()) {
+                channel.EnableWrite();
+            }
+        }
+
+        if (!out_buf_.ReadableSize()) {
+            Release();
+        }
     }
 
     void EnableInactiveReleaseInLoop(int sec) {
 
     }
 
-    void CancelInactiveReleaseInLoop(int sec) {
+    void CancelInactiveReleaseInLoop() {
 
     }
 
@@ -98,7 +156,16 @@ private:
         channel.Remove();
         sock_.Close();
 
-        if (loop_.Has)
+        if (loop_->HasTimer(conn_id_)) {
+            CancelInactiveReleaseInLoop();
+        }
+        if (close_cb_) {
+            close_cb_(shared_from_this());
+        }
+
+        if (server_close_cb) {
+            server_close_cb(shared_from_this());
+        }
     }
 
 public:
