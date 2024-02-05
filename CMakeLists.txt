@@ -14,6 +14,7 @@ add_executable(Mymuduo
         EventLoop.hpp
         Timer.hpp
         TimeWheel.hpp
+        Connection.hpp
         #        server.cpp
 #        client.cpp
 )

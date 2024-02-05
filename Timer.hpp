@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <list>
+#include <utility>
 #include <vector>
 #include <unordered_set>
 #include <functional>
@@ -21,24 +22,20 @@ using ReleaseCallback = std::function<void()>;
 
 class Timer {
 private:
-    uint64_t time_out_;
-    bool is_canceled{false};
     uint64_t id_;
+    uint64_t time_out_;
     TimerCallback timer_callback_;
     ReleaseCallback release_callback_;
+
+    bool is_canceled{false};
 public:
-    Timer(uint64_t id, int timeout): id_(id), time_out_(timeout) {}
+    Timer(uint64_t id, int timeout, TimerCallback cb): id_(id), time_out_(timeout), timer_callback_(std::move(cb)) {}
 
     ~Timer() {
-        if (release_callback_) {
-            release_callback_();
-        } else if (timer_callback_ && !is_canceled) {
+        if (!is_canceled) {
             timer_callback_();
         }
-    }
-
-    uint64_t GetId() {
-        return id_;
+        release_callback_();
     }
 
     int TimeOut() {
@@ -47,10 +44,6 @@ public:
 
     void Cancel() {
         is_canceled = true;
-    }
-
-    void SetTimerCb(const TimerCallback &cb) {
-        timer_callback_ = cb;
     }
 
     void SetReleaseCb(const ReleaseCallback &cb) {
