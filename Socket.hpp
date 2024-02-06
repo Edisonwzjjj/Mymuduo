@@ -27,6 +27,10 @@ public:
         return true;
     }
 
+    void Close() const {
+        close(sock_fd_);
+    }
+
     bool Bind(uint64_t port, const std::string &str = "127.0.0.1") const {
         sockaddr_in addr{};
         addr.sin_family = AF_INET;
@@ -123,9 +127,7 @@ public:
 
     explicit Socket(int fd): sock_fd_(fd) {}
 
-    ~Socket() {
-        close(sock_fd_);
-    }
+    ~Socket() = default;
 
     bool CreateServer(uint64_t port, const std::string &ip = "127.0.0.1", bool block = false) {
         if (!Create()) return false;

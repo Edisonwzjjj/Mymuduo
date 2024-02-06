@@ -49,13 +49,13 @@ private:
         return fd;
     }
 
-    void ReadTimeFd() {
+    int ReadTimeFd() const {
         uint64_t time;
-        int st = read(time_fd_, &time, sizeof(uint64_t));
+        int st = read(time_fd_, &time, 8);
         if (st < 0) {
-            ERR_LOG("read error");
             abort();
         }
+        return time;
     }
 
 
@@ -87,7 +87,7 @@ public:
         return true;
     }
 
-    void TimerAdd(int timeout, uint64_t id, const TimerCallback &cb) {
+    void TimerAdd(uint64_t id, int timeout, const TimerCallback &cb) {
         if (timeout > 60 || timeout < 0) {
             return;
         }

@@ -54,7 +54,7 @@ public:
         return fd;
     }
 
-    void ReadEventFd() {
+    void ReadEventFd() const {
         uint64_t res = 0;
         int st = read(event_fd_, &res, sizeof(uint64_t));
         if (st < 0) {
@@ -67,9 +67,9 @@ public:
         }
     }
 
-    void WakeUpEventFd() {
+    void WakeUpEventFd() const {
         uint64_t val = 1;
-        int st = write(event_fd_, &val, sizeof(uint64_t));
+        int st = write(event_fd_, &val, 8);
         if (st < 0) {
             if (errno == EINTR) {
                 return;
@@ -129,6 +129,14 @@ public:
 
     void TimerRefresh(uint64_t id) {
         time_wheel_.TimerRefresh(id);
+    }
+
+    void TimerAdd(uint64_t id, int timeout, const Functor &cb) {
+        time_wheel_.TimerAdd(id, timeout, cb);
+    }
+
+    void TimerCancel(uint64_t id) {
+        time_wheel_.TimerCancel(id);
     }
 };
 

@@ -33,7 +33,7 @@ public:
 
     int Fd() { return fd_; }
 
-    uint32_t GetEvents() { return events_; }
+    uint32_t GetEvents() const { return events_; }
 
     void SetREvents(uint32_t ev) { revents_ = ev; }
 
@@ -47,9 +47,9 @@ public:
 
     void SetEventCb(const EventCallback &cb) { event_callback_ = cb; }
 
-    bool CanRead() { return events_ & EPOLLIN; }
+    bool CanRead() const { return events_ & EPOLLIN; }
 
-    bool CanWrite() { return events_ & EPOLLOUT; }
+    bool CanWrite() const { return events_ & EPOLLOUT; }
 
     void EnableRead() { events_ |= EPOLLIN; Update(); }
 

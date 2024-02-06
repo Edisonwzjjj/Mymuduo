@@ -38,11 +38,11 @@ public:
         return buf_.size() - write_idx_;
     }
 
-    auto HeadSpace() -> uint64_t {
+    auto HeadSpace() const -> uint64_t {
         return read_idx_;
     }
 
-    auto ReadableSize() -> uint64_t {
+    auto ReadableSize() const -> uint64_t {
         assert(write_idx_ - read_idx_ >= 0);
         return write_idx_ - read_idx_;
     }
@@ -80,7 +80,7 @@ public:
         }
     }
 
-    void Write(const std::string str) {
+    void Write(const std::string& str) {
         Write(str.c_str(), str.size());
     }
 

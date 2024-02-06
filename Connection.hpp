@@ -30,7 +30,7 @@ private:
     std::any context_;
     EventLoop *loop_;
 
-    ConnState state_{ConnState::DISCONNECTED};
+    ConnState state_{ConnState::CONNECTING};
     bool enable_inactive_release_{false};
 
     using SharedConnection = std::shared_ptr<Connection>;
@@ -42,12 +42,12 @@ private:
 
     using ClosedCb = std::function<void(const SharedConnection &)>;
     ClosedCb close_cb_;
-    ClosedCb server_close_cb;
+    ClosedCb server_close_cb_; //组件内设置
 
     using AnyCb = std::function<void(const SharedConnection &)>;
     AnyCb event_cb_;
 
-
+    //其余由客户端设置
 private:
     void HandleRead() {
         char buf[65536]{};
@@ -102,16 +102,16 @@ private:
         }
     }
 
-    void EstablishLoop() {
+    void EstablishInLoop() {
         assert(state_ == ConnState::CONNECTING);
         state_ = ConnState::CONNECTED;
         channel.EnableRead();
         if (connected_cb_) {
             connected_cb_(shared_from_this());
         }
-    }
+    } // 半连接设置
 
-    void SendInLoop(const std::string &data) {
+    void SendInLoop(const std::string& data) {
         if (state_ == ConnState::DISCONNECTED) {
             return;
         }
@@ -139,16 +139,28 @@ private:
     }
 
     void EnableInactiveReleaseInLoop(int sec) {
-
+        enable_inactive_release_ = true;
+        if (loop_->HasTimer(conn_id_)) {
+            loop_->TimerRefresh(conn_id_);
+            return;
+        }
+        loop_->TimerAdd(conn_id_, sec, [this] { Release(); });
     }
 
     void CancelInactiveReleaseInLoop() {
-
+        enable_inactive_release_ = false;
+        if (loop_->HasTimer(conn_id_)) {
+            loop_->TimerCancel(conn_id_);
+        }
     }
 
     void UpgradeInLoop(const std::any &context, const ConnectedCb &conn, const MessageCb &msg,
                        const ClosedCb &close, const AnyCb &any) {
-
+        context_ = context;
+        connected_cb_ = conn;
+        message_cb_ = msg;
+        close_cb_ = close;
+        event_cb_ = any;
     }
 
     void ReleaseInLoop() {
@@ -163,8 +175,8 @@ private:
             close_cb_(shared_from_this());
         }
 
-        if (server_close_cb) {
-            server_close_cb(shared_from_this());
+        if (server_close_cb_) {
+            server_close_cb_(shared_from_this());
         }
     }
 
@@ -172,15 +184,27 @@ public:
     Connection(uint64_t conn_id, int sock_fd, EventLoop *loop) :
             conn_id_(conn_id), sock_fd_(sock_fd),
             loop_(loop), channel(sock_fd_, loop) {
-        state_ = ConnState::CONNECTED;
+
+        channel.SetReadCb([this] { HandleRead(); });
+        channel.SetWriteCb([this] {HandleWrite(); });
+        channel.SetCloseCb([this] {HandleClose(); });
+        channel.SetErrorCb([this] {HandleError(); });
+        channel.SetEventCb([this] {HandleEvent(); });
     }
 
-    ~Connection() {
-        state_ = ConnState::DISCONNECTED;
+    ~Connection() = default;
+
+    bool IsConnected() {
+        return state_ == ConnState::CONNECTED;
     }
 
-    void Send(const std::string &data) {
+    void Establish() {
+        loop_->RunInLoop([this] {EstablishInLoop(); });
+    }
 
+    void Send(const std::string data) {
+        //data 可能已经被释放了
+        loop_->RunInLoop([&, this] { SendInLoop(data); });
     }
 
     void SetContext(const std::any &context) {
@@ -200,15 +224,33 @@ public:
     }
 
 
-    void CancelInactiveRelease(int sec) {
-        loop_->RunInLoop([this, sec] { CancelInactiveReleaseInLoop(sec); });
+    void CancelInactiveRelease() {
+        loop_->RunInLoop([this] { CancelInactiveReleaseInLoop(); });
     }
 
     void Upgrade(const std::any &context, const ConnectedCb &conn, const MessageCb &msg,
-                 const ClosedCb &close, const AnyCb &any); //切换协议， 重置context
+                 const ClosedCb &close, const AnyCb &any) {
+        loop_->RunInLoop([&, this] { UpgradeInLoop(context, conn, msg, close, any); });
+    } //切换协议， 重置context
 
     void Release() {
-        loop_->RunInLoop([this] { ReleaseInLoop(); });
+        loop_->Enqueue([this] { ReleaseInLoop(); });
+    }
+
+    void SetConnCb(const ConnectedCb &cb) {
+        connected_cb_ = cb;
+    }
+
+    void SetMsgCb(const MessageCb &cb) {
+        message_cb_ = cb;
+    }
+
+    void SetCloseCb(const ClosedCb &cb) {
+        close_cb_ = cb;
+    }
+
+    void SetEventCb(const AnyCb &cb) {
+        event_cb_ = cb;
     }
 };
 

@@ -16,7 +16,7 @@
 #define MAX_EVENTS 1024
 
 class Channel;
-
+auto log = Logger::GetLogger();
 
 class Poller {
 
@@ -32,7 +32,8 @@ private:
         ep_ev.events = ch->GetEvents();
         int st = epoll_ctl(ep_fd_, op, fd, &ep_ev);
         if (st < 0) {
-            ERR_LOG("epollctl failed");
+            auto sl = std::source_location::current();
+            log.Log(sl, "");
         }
     }
 
@@ -46,7 +47,8 @@ public:
     Poller() {
         ep_fd_ = epoll_create(MAX_EVENTS);
         if (ep_fd_ < 0) {
-            ERR_LOG("epoll create failed");
+            auto sl = std::source_location::current();
+            log.Log(sl, "epoll create failed");
             abort();
         }
     }
@@ -74,7 +76,8 @@ public:
             if (errno == EINTR) {
                 return;
             }
-            ERR_LOG("EPOLL WAIT ERROR:%s\n", strerror(errno));
+            auto sl = std::source_location::current();
+            log.Log(sl, "EPOLL WAIT ERROR");
             abort();
         }
 
