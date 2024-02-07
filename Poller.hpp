@@ -1,7 +1,4 @@
-//
-// Created by ZIJUN WANG on 3/2/2024.
-//
-
+#pragma once
 #ifndef MYMUDUO_POLLER_HPP
 #define MYMUDUO_POLLER_HPP
 

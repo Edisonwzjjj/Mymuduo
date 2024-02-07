@@ -1,8 +1,4 @@
-//
-// Created by ZIJUN WANG on 1/2/2024.
-//
 #pragma once
-
 #ifndef MYMUDUO_TIMER_HPP
 #define MYMUDUO_TIMER_HPP
 

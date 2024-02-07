@@ -1,3 +1,4 @@
+#pragma once
 #ifndef MYMUDUO_SOCKET_HPP
 #define MYMUDUO_SOCKET_HPP
 
@@ -21,7 +22,6 @@ public:
     bool Create(){
         sock_fd_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (sock_fd_ < 0) {
-            ERR_LOG("create socket fail");
             return false;
         }
         return true;
@@ -29,6 +29,10 @@ public:
 
     void Close() const {
         close(sock_fd_);
+    }
+
+    int Fd() const {
+        return sock_fd_;
     }
 
     bool Bind(uint64_t port, const std::string &str = "127.0.0.1") const {
@@ -39,7 +43,6 @@ public:
 
         int st = bind(sock_fd_, (sockaddr *)&addr, sizeof(struct sockaddr));
         if (st < 0) {
-            ERR_LOG("bind fail");
             return false;
         }
         return true;
@@ -48,7 +51,6 @@ public:
     bool Listen(int backlog = MAX_LISTEN) const {
         int st = listen(sock_fd_, backlog);
         if (st < 0) {
-            ERR_LOG("listen fail");
             return false;
         }
         return true;
@@ -62,7 +64,6 @@ public:
 
         int st = connect(sock_fd_, (sockaddr *)&addr, sizeof(struct sockaddr));
         if (st < 0) {
-            ERR_LOG("connect fail");
             return false;
         }
         return true;
@@ -72,7 +73,6 @@ public:
     bool Accept() const {
         int new_fd = accept(sock_fd_, nullptr, nullptr);
         if (new_fd < 0) {
-            ERR_LOG("accept fail");
             return false;
         }
         return true;
@@ -85,7 +85,6 @@ public:
             if (errno == EINTR || errno == EAGAIN) {
                 return 0;
             }
-            ERR_LOG("recv fail");
             return -1;
         }
         return data;
@@ -102,7 +101,6 @@ public:
             if (errno == EINTR || errno == EAGAIN) {
                 return 0;
             }
-            ERR_LOG("send fail");
             return -1;
         }
         return data;

@@ -1,9 +1,8 @@
-//
-// Created by ZIJUN WANG on 4/2/2024.
-//
+#pragma once
 
 #ifndef MYMUDUO_EVENTLOOP_HPP
 #define MYMUDUO_EVENTLOOP_HPP
+
 
 #include "Poller.hpp"
 #include "Channel.hpp"

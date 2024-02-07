@@ -1,7 +1,4 @@
-//
-// Created by ZIJUN WANG on 5/2/2024.
-//
-
+#pragma once
 #ifndef MYMUDUO_CONNECTION_HPP
 #define MYMUDUO_CONNECTION_HPP
 

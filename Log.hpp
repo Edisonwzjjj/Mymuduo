@@ -1,7 +1,4 @@
-//
-// Created by ZIJUN WANG on 2/2/2024.
-//
-
+#pragma once
 #ifndef MYMUDUO_LOG_HPP
 #define MYMUDUO_LOG_HPP
 

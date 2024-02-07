@@ -1,8 +1,4 @@
-//
-// Created by ZIJUN WANG on 1/2/2024.
-//
 #pragma once
-
 #ifndef MYMUDUO_TIMEWHEEL_HPP
 #define MYMUDUO_TIMEWHEEL_HPP
 
