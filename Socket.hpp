@@ -1,6 +1,5 @@
 #pragma once
-#ifndef MYMUDUO_SOCKET_HPP
-#define MYMUDUO_SOCKET_HPP
+
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -27,8 +26,11 @@ public:
         return true;
     }
 
-    void Close() const {
-        close(sock_fd_);
+    void Close() {
+        if (sock_fd_ != -1) {
+            close(sock_fd_);
+            sock_fd_ = -1;
+        }
     }
 
     int Fd() const {
@@ -94,7 +96,7 @@ public:
         return Recv(buf, len, MSG_DONTWAIT);
     }
 
-    ssize_t Send(void *buf, int len, int flag = 0) const {
+    ssize_t Send(const void *buf, int len, int flag = 0) const {
         int data = send(sock_fd_, buf, len, flag);
         if (data < 0) {
             //EINTR 信号打断 EAGAIN 无数据读
@@ -143,5 +145,3 @@ public:
     }
 };
 
-
-#endif
