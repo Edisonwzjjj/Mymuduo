@@ -1,6 +1,5 @@
 #pragma once
-#ifndef MYMUDUO_POLLER_HPP
-#define MYMUDUO_POLLER_HPP
+
 
 #include "Log.hpp"
 #include "Channel.hpp"
@@ -13,7 +12,6 @@
 #define MAX_EVENTS 1024
 
 class Channel;
-auto log = Logger::GetLogger();
 
 class Poller {
 
@@ -29,8 +27,6 @@ private:
         ep_ev.events = ch->GetEvents();
         int st = epoll_ctl(ep_fd_, op, fd, &ep_ev);
         if (st < 0) {
-            auto sl = std::source_location::current();
-            log.Log(sl, "");
         }
     }
 
@@ -44,8 +40,6 @@ public:
     Poller() {
         ep_fd_ = epoll_create(MAX_EVENTS);
         if (ep_fd_ < 0) {
-            auto sl = std::source_location::current();
-            log.Log(sl, "epoll create failed");
             abort();
         }
     }
@@ -66,15 +60,13 @@ public:
         }
     }
 
-    void Poll(std::vector<Channel *> &active) {
+    void Poll(std::vector<Channel *> *active) {
         //-1 means block
         int nfds = epoll_wait(ep_fd_, ep_ev_, MAX_EVENTS, -1);
         if (nfds < 0) {
             if (errno == EINTR) {
                 return;
             }
-            auto sl = std::source_location::current();
-            log.Log(sl, "EPOLL WAIT ERROR");
             abort();
         }
 
@@ -82,11 +74,10 @@ public:
             auto it = channels_.find(ep_ev_[i].data.fd);
             assert(it != channels_.end());
             it->second->SetREvents(ep_ev_[i].events);
-            active.push_back(it->second);
+            active->push_back(it->second);
         }
     }
 };
 
 
 
-#endif //MYMUDUO_POLLER_HPP

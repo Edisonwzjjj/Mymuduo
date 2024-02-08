@@ -1,6 +1,4 @@
 #pragma once
-#ifndef MYMUDUO_TIMEWHEEL_HPP
-#define MYMUDUO_TIMEWHEEL_HPP
 
 #define MAX_TIMEOUT 60
 
@@ -19,11 +17,10 @@ private:
     using SharedTimer = std::shared_ptr<Timer>;
     using Bucket = std::vector<SharedTimer>;
     using BucketList = std::vector<Bucket>;
-    BucketList wheel_{MAX_TIMEOUT};
+    BucketList wheel_;
 
     using WeakTimer = std::weak_ptr<Timer>;
     std::unordered_map<uint64_t, WeakTimer> timers_;
-
 
     EventLoop *loop_;
     int time_fd_;
@@ -45,6 +42,11 @@ private:
         return fd;
     }
 
+    void Tick() {
+        tick_ = (tick_ + 1) % capacity_;
+        wheel_[tick_].clear();
+    }
+
     int ReadTimeFd() const {
         uint64_t time;
         int st = read(time_fd_, &time, 8);
@@ -55,18 +57,52 @@ private:
     }
 
 
-    void Tick() {
-        tick_ = (tick_ + 1) % capacity_;
-        wheel_[tick_].clear();
-    }
-
-
     void OnTime() {
         ReadTimeFd();
         Tick();
     }
+
+    void RemoveTimer(uint64_t id) {
+        auto it = timers_.find(id);
+        if (it != timers_.end()) {
+            timers_.erase(id);
+        }
+    }
+
+    void TimerAddInLoop(uint64_t id, int timeout, const TimerCallback &cb) {
+        SharedTimer t = std::make_shared<Timer>(id, timeout, cb);
+        t->SetReleaseCb([this, id] { RemoveTimer(id); });
+        int pos = (tick_ + timeout) % capacity_;
+        wheel_[pos].push_back(t);
+        timers_[id] = WeakTimer(t);
+    }
+
+    void TimerRefreshInLoop(uint64_t id) {
+        auto it = timers_.find(id);
+        if (it == timers_.end()) {
+            return;
+        }
+
+        auto t = it->second.lock();
+        int time_out = t->TimeOut();
+        int pos = (tick_ + time_out) % capacity_;
+        wheel_[pos].push_back(t);
+    }
+
+    void TimerCancelInLoop(uint64_t id) {
+        auto it = timers_.find(id);
+        if (it == timers_.end()) {
+            return;
+        }
+
+        auto t = it->second.lock();
+        if (t) {
+            t->Cancel();
+        }
+    }
+
 public:
-    explicit TimeWheel(EventLoop *loop): loop_(loop), time_fd_(CreateTimeFd()) {
+    explicit TimeWheel(EventLoop *loop): wheel_(capacity_), loop_(loop), time_fd_(CreateTimeFd()) {
         timer_channel_ = std::make_unique<Channel>(time_fd_, loop);
         timer_channel_->SetReadCb([this] { OnTime(); });
         timer_channel_->EnableRead();
@@ -83,42 +119,9 @@ public:
         return true;
     }
 
-    void TimerAdd(uint64_t id, int timeout, const TimerCallback &cb) {
-        if (timeout > 60 || timeout < 0) {
-            return;
-        }
-        SharedTimer t = std::make_shared<Timer>(id, timeout, cb);
-        t->SetReleaseCb([this, id] { RemoveWeakTimer(id); });
-        timers_[id] = WeakTimer(t);
-        int pos = (tick_ + timeout) % capacity_;
-        wheel_[pos].push_back(t);
-    }
-
-    void TimerRefresh(uint64_t id) {
-        auto it = timers_.find(id);
-        assert(it != timers_.end());
-        int timeout = it->second.lock()->TimeOut();
-        int pos = (tick_ + timeout) % capacity_;
-        wheel_[pos].push_back(SharedTimer(it->second));
-    }
-
-    void TimerCancel(uint64_t id) {
-        auto it = timers_.find(id);
-        assert(it != timers_.end());
-        auto t = it->second.lock();
-        if (t) {
-            t->Cancel();
-        }
-    }
-
-    void RemoveWeakTimer(uint64_t id) {
-        auto it = timers_.find(id);
-        if (it != timers_.end()) {
-            timers_.erase(id);
-        }
-    }
-
+    void TimerAdd(uint64_t id, int timeout, const TimerCallback &cb);
+    void TimerRefresh(uint64_t id);
+    void TimerCancel(uint64_t id);
 };
 
 
-#endif //MYMUDUO_TIMEWHEEL_HPP

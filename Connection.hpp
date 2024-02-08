@@ -1,6 +1,4 @@
 #pragma once
-#ifndef MYMUDUO_CONNECTION_HPP
-#define MYMUDUO_CONNECTION_HPP
 
 #include "EventLoop.hpp"
 #include "Socket.hpp"
@@ -16,6 +14,8 @@ enum class ConnState {
 
 
 class Connection : public std::enable_shared_from_this<Connection> {
+public:
+    using SharedConnection = std::shared_ptr<Connection>;
 private:
     uint64_t conn_id_;
     int sock_fd_;
@@ -30,11 +30,11 @@ private:
     ConnState state_{ConnState::CONNECTING};
     bool enable_inactive_release_{false};
 
-    using SharedConnection = std::shared_ptr<Connection>;
+
     using ConnectedCb = std::function<void(const SharedConnection &)>;
     ConnectedCb connected_cb_;
 
-    using MessageCb = std::function<void(const SharedConnection &, Buffer &)>;
+    using MessageCb = std::function<void(const SharedConnection &, Buffer *)>;
     MessageCb message_cb_;
 
     using ClosedCb = std::function<void(const SharedConnection &)>;
@@ -55,19 +55,19 @@ private:
         }
         in_buf_.Write(buf, st);
         if (in_buf_.ReadableSize() > 0) {
-            message_cb_(shared_from_this(), in_buf_);
+            message_cb_(shared_from_this(), &in_buf_);
         }
     }
 
     void HandleWrite() {
         ssize_t st = sock_.NonBlockSend(out_buf_.ReadPos(), out_buf_.ReadableSize());
-        auto str = out_buf_.Read(out_buf_.ReadableSize());
         if (st < 0) {
             if (in_buf_.ReadableSize() > 0) {
-                message_cb_(shared_from_this(), in_buf_);
+                message_cb_(shared_from_this(), &in_buf_);
             }
             Release();
         }
+        out_buf_.Read(st);
 
         if (!out_buf_.ReadableSize()) {
             channel.DisableWrite();
@@ -78,8 +78,8 @@ private:
     }
 
     void HandleClose() {
-        if (in_buf_.ReadableSize()) {
-            message_cb_(shared_from_this(), in_buf_);
+        if (in_buf_.ReadableSize() > 0) {
+            message_cb_(shared_from_this(), &in_buf_);
         }
         Release();
     }
@@ -121,7 +121,7 @@ private:
     void ShutDownInLoop() {
         state_ = ConnState::DISCONNECTING;
         if (in_buf_.ReadableSize()) {
-            message_cb_(shared_from_this(), in_buf_);
+            message_cb_(shared_from_this(), &in_buf_);
         }
 
         if (out_buf_.ReadableSize()) {
@@ -195,13 +195,18 @@ public:
         return state_ == ConnState::CONNECTED;
     }
 
+    uint64_t GetId() const {
+        return conn_id_;
+    }
+
     void Establish() {
         loop_->RunInLoop([this] {EstablishInLoop(); });
     }
 
-    void Send(const std::string data) {
+    void Send(const std::string& data) {
         //data 可能已经被释放了
-        loop_->RunInLoop([&, this] { SendInLoop(data); });
+        auto str = data;
+        loop_->RunInLoop([&, this] { SendInLoop(str); });
     }
 
     void SetContext(const std::any &context) {
@@ -252,4 +257,3 @@ public:
 };
 
 
-#endif //MYMUDUO_CONNECTION_HPP

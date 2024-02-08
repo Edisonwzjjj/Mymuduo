@@ -3,9 +3,9 @@ project(Mymuduo)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(Mymuduo
-        main.cpp
-        Any.hpp
+add_executable(
+        server
+        server.cpp
         Buffer.hpp
         Log.hpp
         Socket.hpp
@@ -15,6 +15,26 @@ add_executable(Mymuduo
         Timer.hpp
         TimeWheel.hpp
         Connection.hpp
-        #        server.cpp
-#        client.cpp
+        Acceptor.hpp
+        Thread.hpp
+        ThreadPool.hpp
+#        TcpServer.hpp
 )
+
+add_executable(
+        client
+        client.cpp
+        Buffer.hpp
+        Log.hpp
+        Socket.hpp
+        Channel.hpp
+        Poller.hpp
+        EventLoop.hpp
+        Timer.hpp
+        TimeWheel.hpp
+        Connection.hpp
+        Acceptor.hpp
+        Thread.hpp
+        ThreadPool.hpp
+)
+

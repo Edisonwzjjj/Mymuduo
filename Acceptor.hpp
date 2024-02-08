@@ -1,6 +1,4 @@
 #pragma once
-#ifndef MYMUDUO_ACCEPTOR_HPP
-#define MYMUDUO_ACCEPTOR_HPP
 
 //管理监听套接字 1创建 2读事件监控 3 触发 获取新连接
 //服务器实现处理新连接的函数 设置到Acceptor上
@@ -36,16 +34,19 @@ private:
     }
 
 public:
-    Acceptor(uint64_t port, EventLoop *loop): sock_(CreateServer(port)), loop_(loop), channel_(sock_.Fd(), loop) {
+    Acceptor(uint64_t port, EventLoop *loop) : sock_(CreateServer(port)), loop_(loop), channel_(sock_.Fd(), loop) {
         channel_.SetReadCb([this] { HandleRead(); });
         //不能设置读监控 设置回调函数后再启动
     }
 
     ~Acceptor() = default;
 
+    void SetAcceptCb(const AcceptCb &cb) {
+        accept_cb_ = cb;
+    }
+
     void Listen() {
         channel_.EnableRead();
     }
 };
 
-#endif //MYMUDUO_ACCEPTOR_HPP

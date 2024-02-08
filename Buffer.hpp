@@ -1,9 +1,4 @@
-//
-// Created by ZIJUN WANG on 2/2/2024.
-//
 #pragma once
-#ifndef MYMUDUO_BUFFER_HPP
-#define MYMUDUO_BUFFER_HPP
 
 #include <vector>
 #include <algorithm>
@@ -80,7 +75,7 @@ public:
         }
     }
 
-    void Write(const std::string& str) {
+    void Write(const std::string &str) {
         Write(str.c_str(), str.size());
     }
 
@@ -112,4 +107,3 @@ public:
     }
 };
 
-#endif //MYMUDUO_BUFFER_HPP

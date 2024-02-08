@@ -1,9 +1,5 @@
 #pragma once
 
-#ifndef MYMUDUO_EVENTLOOP_HPP
-#define MYMUDUO_EVENTLOOP_HPP
-
-
 #include "Poller.hpp"
 #include "Channel.hpp"
 #include "TimeWheel.hpp"
@@ -16,7 +12,6 @@
 //eventfd(unsigned int init, int flags)
 // flag: EFD_CLOEXEC EFD_NONBLOCK
 //read&&write should be 8 bytes
-
 
 
 class EventLoop {
@@ -55,13 +50,13 @@ public:
 
     void ReadEventFd() const {
         uint64_t res = 0;
-        int st = read(event_fd_, &res, sizeof(uint64_t));
+        int st = read(event_fd_, &res, 8);
         if (st < 0) {
             //EINTR 信号打断 EAGAIN 无数据可读
             if (errno == EINTR || errno == EAGAIN) {
                 return;
             }
-            ERR_LOG("READ EVENTFD FAILED");
+            ERR_LOG("READ EVENTFD FAILED!");
             abort();
         }
     }
@@ -73,7 +68,6 @@ public:
             if (errno == EINTR) {
                 return;
             }
-            ERR_LOG("WRITE EVENTFD FAILED");
             abort();
         }
     }
@@ -87,18 +81,24 @@ public:
 
     void Start() {
         //监控 处理 执行
-        std::vector<Channel *> actives;
-        poller_.Poll(actives);
-        for (auto &a: actives) {
-            a->HandleEvent();
+        while (true) {
+            std::vector<Channel *> actives;
+            poller_.Poll(&actives);
+            for (auto &a: actives) {
+                a->HandleEvent();
+            }
+            RunAllTask();
         }
-        RunAllTask();
     }
 
     void RunInLoop(const Functor &cb) {
         if (IsInLoop()) {
             cb();
         } else Enqueue(cb);
+    }
+
+    void AssertInLoop() {
+        assert(thread_id_ == std::this_thread::get_id());
     }
 
     void Enqueue(const Functor &cb) {
@@ -140,6 +140,23 @@ public:
 };
 
 void Channel::Remove() { loop_->RemoveEvent(this); }
+
 void Channel::Update() { loop_->UpdateEvent(this); }
 
-#endif //MYMUDUO_EVENTLOOP_HPP
+void TimeWheel::TimerAdd(uint64_t id, int timeout, const TimerCallback &cb) {
+    [this, id, timeout, cb] {
+        TimerAddInLoop(id, timeout, cb);
+    };
+}
+
+void TimeWheel::TimerRefresh(uint64_t id) {
+    [this, id] {
+        TimerRefreshInLoop(id);
+    };
+}
+
+void TimeWheel::TimerCancel(uint64_t id) {
+    [this, id] {
+        TimerCancel(id);
+    };
+}

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef MYMUDUO_TIMER_HPP
-#define MYMUDUO_TIMER_HPP
 
 #include <iostream>
 #include <list>
@@ -34,7 +32,7 @@ public:
         release_callback_();
     }
 
-    int TimeOut() {
+    int TimeOut() const {
         return time_out_;
     }
 
@@ -47,5 +45,4 @@ public:
     }
 };
 
-#endif //MYMUDUO_TIMER_HPP
 

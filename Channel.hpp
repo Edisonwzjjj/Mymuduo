@@ -1,10 +1,4 @@
-//
-// Created by ZIJUN WANG on 3/2/2024.
-//
-
-#ifndef MYMUDUO_CHANNEL_HPP
-#define MYMUDUO_CHANNEL_HPP
-
+#pragma once
 
 #include <cstdint>
 #include <functional>
@@ -51,17 +45,33 @@ public:
 
     bool CanWrite() const { return events_ & EPOLLOUT; }
 
-    void EnableRead() { events_ |= EPOLLIN; Update(); }
+    void EnableRead() {
+        events_ |= EPOLLIN;
+        Update();
+    }
 
-    void EnableWrite() { events_ |= EPOLLOUT; Update(); }
+    void EnableWrite() {
+        events_ |= EPOLLOUT;
+        Update();
+    }
 
-    void DisableRead() { events_ &= ~EPOLLIN; Update(); }
+    void DisableRead() {
+        events_ &= ~EPOLLIN;
+        Update();
+    }
 
-    void DisableWrite() { events_ &= ~EPOLLOUT; Update(); }
+    void DisableWrite() {
+        events_ &= ~EPOLLOUT;
+        Update();
+    }
 
-    void DisableAll() { events_ = 0; Update(); }
+    void DisableAll() {
+        events_ = 0;
+        Update();
+    }
 
     void Remove();
+
     void Update();
 
     void HandleEvent() {
@@ -90,4 +100,3 @@ public:
     }
 };
 
-#endif //MYMUDUO_CHANNEL_HPP
