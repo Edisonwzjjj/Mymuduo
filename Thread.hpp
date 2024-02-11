@@ -5,37 +5,37 @@
 #include <thread>
 #include <condition_variable>
 
-class Thread {
+class LoopThread {
 private:
-    std::thread thread_;
-    std::mutex mutex_;
-    std::condition_variable cv_; //同步 避免线程创建但是loop并未实例化， 不能获取
-    EventLoop *loop_{nullptr}; //在线程内实例化
-
+    /*用于实现_loop获取的同步关系，避免线程创建了，但是_loop还没有实例化之前去获取_loop*/
+    std::mutex _mutex;          // 互斥锁
+    std::condition_variable _cond;   // 条件变量
+    EventLoop *_loop;       // EventLoop指针变量，这个对象需要在线程内实例化
+    std::thread _thread;    // EventLoop对应的线程
 private:
-    void Entry() {
+    /*实例化 EventLoop 对象，唤醒_cond上有可能阻塞的线程，并且开始运行EventLoop模块的功能*/
+    void ThreadEntry() {
         EventLoop loop;
         {
-            std::unique_lock lock(mutex_);
-            loop_ = &loop;
-            cv_.notify_all();
+            std::unique_lock<std::mutex> lock(_mutex);//加锁
+            _loop = &loop;
+            _cond.notify_all();
         }
-        loop_->Start();
+        loop.Start();
     }
-
 public:
-    Thread() : thread_(std::thread([this] { Entry(); })) {}
-
-    auto GetLoop() -> EventLoop * {
-        EventLoop *tmp{nullptr};
+    /*创建线程，设定线程入口函数*/
+    LoopThread():_loop(NULL), _thread(std::thread(&LoopThread::ThreadEntry, this)) {}
+    /*返回当前线程关联的EventLoop对象指针*/
+    EventLoop *GetLoop() {
+        EventLoop *loop = NULL;
         {
-            std::unique_lock lock(mutex_);
-            cv_.wait(lock, [&] {
-                return loop_ != nullptr;
-            });
-            tmp = loop_;
+            std::unique_lock<std::mutex> lock(_mutex);//加锁
+            _cond.wait(lock, [&](){ return _loop != NULL; });//loop为NULL就一直阻塞
+            loop = _loop;
         }
-        return tmp;
+        return loop;
     }
 };
+
 

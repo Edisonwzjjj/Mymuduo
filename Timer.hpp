@@ -11,38 +11,25 @@
 #include <cassert>
 #include <unistd.h>
 
-using TimerCallback = std::function<void()>;
-using ReleaseCallback = std::function<void()>;
-
-class Timer {
+using TaskFunc = std::function<void()>;
+using ReleaseFunc = std::function<void()>;
+class TimerTask{
 private:
-    uint64_t id_;
-    uint64_t time_out_;
-    TimerCallback timer_callback_;
-    ReleaseCallback release_callback_;
-
-    bool is_canceled{false};
+    uint64_t _id;       // 定时器任务对象ID
+    uint32_t _timeout;  //定时任务的超时时间
+    bool _canceled;     // false-表示没有被取消， true-表示被取消
+    TaskFunc _task_cb;  //定时器对象要执行的定时任务
+    ReleaseFunc _release; //用于删除TimerWheel中保存的定时器对象信息
 public:
-    Timer(uint64_t id, int timeout, TimerCallback cb): id_(id), time_out_(timeout), timer_callback_(std::move(cb)) {}
-
-    ~Timer() {
-        if (!is_canceled) {
-            timer_callback_();
-        }
-        release_callback_();
+    TimerTask(uint64_t id, uint32_t delay, const TaskFunc &cb):
+            _id(id), _timeout(delay), _task_cb(cb), _canceled(false) {}
+    ~TimerTask() {
+        if (_canceled == false) _task_cb();
+        _release();
     }
-
-    int TimeOut() const {
-        return time_out_;
-    }
-
-    void Cancel() {
-        is_canceled = true;
-    }
-
-    void SetReleaseCb(const ReleaseCallback &cb) {
-        release_callback_ = cb;
-    }
+    void Cancel() { _canceled = true; }
+    void SetRelease(const ReleaseFunc &cb) { _release = cb; }
+    uint32_t DelayTime() { return _timeout; }
 };
 
 

@@ -2,40 +2,33 @@
 
 #include "Thread.hpp"
 
-class ThreadPool {
+class LoopThreadPool {
 private:
-    //0 个从属 再base上处理 多个从属 RR轮转， 设置到对应的Connection
-    int thread_count_{0};
-    int next_id_{0};
-    EventLoop *base_loop_{nullptr};
-    std::vector<Thread *> threads_;
-    std::vector<EventLoop *> loops_;
-
+    int _thread_count;
+    int _next_idx;
+    EventLoop *_baseloop;
+    std::vector<LoopThread*> _threads;
+    std::vector<EventLoop *> _loops;
 public:
-    explicit ThreadPool(EventLoop *base): base_loop_(base) {}
-
-    void SetNumber(int num) {
-        thread_count_ = num;
-    }
-
+    LoopThreadPool(EventLoop *baseloop):_thread_count(0), _next_idx(0), _baseloop(baseloop) {}
+    void SetThreadCount(int count) { _thread_count = count; }
     void Create() {
-        if (!thread_count_) {
-            return;
+        if (_thread_count > 0) {
+            _threads.resize(_thread_count);
+            _loops.resize(_thread_count);
+            for (int i = 0; i < _thread_count; i++) {
+                _threads[i] = new LoopThread();
+                _loops[i] = _threads[i]->GetLoop();
+            }
         }
-        threads_.resize(thread_count_);
-        loops_.resize(thread_count_);
-        for (int i = 0; i < thread_count_; ++i) {
-            threads_[i] = new Thread();
-            loops_[i] = threads_[i]->GetLoop();
-        }
+        return ;
     }
-
-    auto NextLoop() -> EventLoop * {
-        if (!thread_count_) {
-            return base_loop_;
+    EventLoop *NextLoop() {
+        if (_thread_count == 0) {
+            return _baseloop;
         }
-        next_id_ = (next_id_ + 1) % thread_count_;
-        return loops_[next_id_];
+        _next_idx = (_next_idx + 1) % _thread_count;
+        return _loops[_next_idx];
     }
 };
 

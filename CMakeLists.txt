@@ -18,23 +18,12 @@ add_executable(
         Acceptor.hpp
         Thread.hpp
         ThreadPool.hpp
-#        TcpServer.hpp
+        TcpServer.hpp
 )
 
 add_executable(
         client
         client.cpp
-        Buffer.hpp
-        Log.hpp
         Socket.hpp
-        Channel.hpp
-        Poller.hpp
-        EventLoop.hpp
-        Timer.hpp
-        TimeWheel.hpp
-        Connection.hpp
-        Acceptor.hpp
-        Thread.hpp
-        ThreadPool.hpp
 )
 

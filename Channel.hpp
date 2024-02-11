@@ -9,94 +9,64 @@ class EventLoop;
 
 class Channel {
 private:
-    int fd_;
-    //监控事件
-    uint32_t events_{};
-    //连接的事件
-    uint32_t revents_{};
-    EventLoop *loop_;
-
+    int _fd;
+    EventLoop *_loop;
+    uint32_t _events;  // 当前需要监控的事件
+    uint32_t _revents; // 当前连接触发的事件
     using EventCallback = std::function<void()>;
-    EventCallback read_callback_;
-    EventCallback write_callback_;
-    EventCallback close_callback_;
-    EventCallback error_callback_;
-    EventCallback event_callback_;
+    EventCallback _read_callback;   //可读事件被触发的回调函数
+    EventCallback _write_callback;  //可写事件被触发的回调函数
+    EventCallback _error_callback;  //错误事件被触发的回调函数
+    EventCallback _close_callback;  //连接断开事件被触发的回调函数
+    EventCallback _event_callback;  //任意事件被触发的回调函数
 public:
-    explicit Channel(int fd, EventLoop *loop) : fd_(fd), loop_(loop) {}
-
-    int Fd() { return fd_; }
-
-    uint32_t GetEvents() const { return events_; }
-
-    void SetREvents(uint32_t ev) { revents_ = ev; }
-
-    void SetReadCb(const EventCallback &cb) { read_callback_ = cb; }
-
-    void SetWriteCb(const EventCallback &cb) { write_callback_ = cb; }
-
-    void SetCloseCb(const EventCallback &cb) { close_callback_ = cb; }
-
-    void SetErrorCb(const EventCallback &cb) { error_callback_ = cb; }
-
-    void SetEventCb(const EventCallback &cb) { event_callback_ = cb; }
-
-    bool CanRead() const { return events_ & EPOLLIN; }
-
-    bool CanWrite() const { return events_ & EPOLLOUT; }
-
-    void EnableRead() {
-        events_ |= EPOLLIN;
-        Update();
-    }
-
-    void EnableWrite() {
-        events_ |= EPOLLOUT;
-        Update();
-    }
-
-    void DisableRead() {
-        events_ &= ~EPOLLIN;
-        Update();
-    }
-
-    void DisableWrite() {
-        events_ &= ~EPOLLOUT;
-        Update();
-    }
-
-    void DisableAll() {
-        events_ = 0;
-        Update();
-    }
-
+    Channel(EventLoop *loop, int fd):_fd(fd), _events(0), _revents(0), _loop(loop) {}
+    int Fd() { return _fd; }
+    uint32_t Events() { return _events; }//获取想要监控的事件
+    void SetREvents(uint32_t events) { _revents = events; }//设置实际就绪的事件
+    void SetReadCallback(const EventCallback &cb) { _read_callback = cb; }
+    void SetWriteCallback(const EventCallback &cb) { _write_callback = cb; }
+    void SetErrorCallback(const EventCallback &cb) { _error_callback = cb; }
+    void SetCloseCallback(const EventCallback &cb) { _close_callback = cb; }
+    void SetEventCallback(const EventCallback &cb) { _event_callback = cb; }
+    //当前是否监控了可读
+    bool ReadAble() { return (_events & EPOLLIN); }
+    //当前是否监控了可写
+    bool WriteAble() { return (_events & EPOLLOUT); }
+    //启动读事件监控
+    void EnableRead() { _events |= EPOLLIN; Update(); }
+    //启动写事件监控
+    void EnableWrite() { _events |= EPOLLOUT; Update(); }
+    //关闭读事件监控
+    void DisableRead() { _events &= ~EPOLLIN; Update(); }
+    //关闭写事件监控
+    void DisableWrite() { _events &= ~EPOLLOUT; Update(); }
+    //关闭所有事件监控
+    void DisableAll() { _events = 0; Update(); }
+    //移除监控
     void Remove();
-
     void Update();
-
+    //事件处理，一旦连接触发了事件，就调用这个函数，自己触发了什么事件如何处理自己决定
     void HandleEvent() {
-        if ((revents_ & EPOLLIN) || (revents_ & EPOLLHUP) || (revents_ & EPOLLPRI)) {
-            if (read_callback_) {
-                read_callback_();
-            }
+        if ((_revents & EPOLLIN) || (_revents & EPOLLRDHUP) || (_revents & EPOLLPRI)) {
+            if (_event_callback) _event_callback();
+            /*不管任何事件，都调用的回调函数*/
+            if (_read_callback) _read_callback();
         }
-        if (revents_ & EPOLLOUT) {
-            if (write_callback_) {
-                write_callback_();
-            }
-        } else if (revents_ & EPOLLERR) {
-            if (error_callback_) {
-                error_callback_();
-            }
-        } else if (revents_ & EPOLLHUP) {
-            if (close_callback_) {
-                close_callback_();
-            }
+        /*有可能会释放连接的操作事件，一次只处理一个*/
+        if (_revents & EPOLLOUT) {
+            if (_event_callback) _event_callback();
+
+            if (_write_callback) _write_callback();
+        }else if (_revents & EPOLLERR) {
+            if (_event_callback) _event_callback();
+
+            if (_error_callback) _error_callback();//一旦出错，就会释放连接，因此要放到前边调用任意回调
+        }else if (_revents & EPOLLHUP) {
+            if (_event_callback) _event_callback();
+
+            if (_close_callback) _close_callback();
         }
 
-        if (event_callback_) {
-            event_callback_();
-        }
     }
 };
-
