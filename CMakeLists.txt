@@ -20,6 +20,7 @@ add_executable(
         ThreadPool.hpp
         TcpServer.hpp
         http/Util.hpp
+        http/Request.hpp
 )
 
 add_executable(
@@ -27,5 +28,6 @@ add_executable(
         client.cpp
         Socket.hpp
         http/Util.hpp
+        http/Request.hpp
 )
 
