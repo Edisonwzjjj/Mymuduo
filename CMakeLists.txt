@@ -21,6 +21,8 @@ add_executable(
         TcpServer.hpp
         http/Util.hpp
         http/Request.hpp
+        http/Responce.hpp
+        http/Context.hpp
 )
 
 add_executable(
@@ -29,5 +31,7 @@ add_executable(
         Socket.hpp
         http/Util.hpp
         http/Request.hpp
+        http/Responce.hpp
+        http/Context.hpp
 )
 
