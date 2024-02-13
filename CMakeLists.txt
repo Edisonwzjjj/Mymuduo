@@ -19,11 +19,13 @@ add_executable(
         Thread.hpp
         ThreadPool.hpp
         TcpServer.hpp
+        http/Util.hpp
 )
 
 add_executable(
         client
         client.cpp
         Socket.hpp
+        http/Util.hpp
 )
 
