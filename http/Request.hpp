@@ -4,10 +4,10 @@
 
 class Request {
 public:
-    std::string_view method_;
-    std::string_view path_;
-    std::string_view version_{"HTTP/1.1"};
-    std::string_view body_;
+    std::string method_;
+    std::string path_;
+    std::string version_{"HTTP/1.1"};
+    std::string body_;
 
     std::smatch match_;
 
@@ -21,7 +21,7 @@ public:
 
     }
 
-    void SetHeader(std::string_view &key, std::string_view &val) {
+    void SetHeader(const std::string &key, const std::string &val) {
         headers_.insert(std::make_pair(key, val));
     }
 

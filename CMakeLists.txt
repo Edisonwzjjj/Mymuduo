@@ -23,6 +23,7 @@ add_executable(
         http/Request.hpp
         http/Responce.hpp
         http/Context.hpp
+        http/HttpServer.hpp
 )
 
 add_executable(
@@ -33,5 +34,6 @@ add_executable(
         http/Request.hpp
         http/Responce.hpp
         http/Context.hpp
+        http/HttpServer.hpp
 )
 
