@@ -22,7 +22,7 @@ std::unordered_map<std::string_view, std::string_view > MIME_MSG {
 
 class Util {
 public:
-    static std::vector<std::string_view> Split(std::string_view &str, std::string_view &sep) {
+    static std::vector<std::string_view> Split(const std::string &str, const std::string &sep) {
         std::vector<std::string_view> res;
 
         size_t offset = 0;
@@ -112,7 +112,7 @@ public:
         }
     }
 
-    static std::string UrlDecode(std::string_view &url) {
+    static std::string UrlDecode(const std::string &url) {
         std::string res;
         for (int i = 0; i < url.size(); ++i) {
             auto c = url[i];
@@ -172,10 +172,9 @@ public:
         return S_ISREG(st.st_mode);
     }
 
-    static bool ValidPath(std::string_view &path) {
+    static bool ValidPath(std::string &path) {
         int level{0};
-        std::string_view sep = "\\";
-        auto tmp = Split(path, sep);
+        auto tmp = Split(path, "\\");
         for (auto &p: tmp) {
             if (p == "..") {
                 --level;

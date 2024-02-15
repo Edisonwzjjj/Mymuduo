@@ -2,7 +2,7 @@
 
 #include "Thread.hpp"
 
-class ThreadPoll {
+class ThreadPool {
 private:
     int num_{0};
     int next_idx_{0};
@@ -12,7 +12,7 @@ private:
     std::vector<EventLoop *> pools_;
 
 public:
-    ThreadPoll(EventLoop *base, int num): base_(base), num_(num) {
+    explicit ThreadPool(EventLoop *base, int num = 5): base_(base), num_(num) {
         if (num > 0) {
             threads_.resize(num_);
             pools_.resize(num_);
