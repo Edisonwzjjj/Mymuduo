@@ -43,7 +43,7 @@ public:
         return res;
     }
 
-    static bool ReadFile(std::string_view &file_name, std::string &buf) {
+    static bool ReadFile(const std::string &file_name, std::string &buf) {
         std::ifstream ifs(file_name.data(), std::ios::binary);
         if (!ifs.is_open()) {
             ERR_LOG("OPEN %s FILE FAILED!", file_name.data());
@@ -140,7 +140,7 @@ public:
         return it->second;
     }
 
-    static std::string_view ExtMime(std::string_view &filename) {
+    static std::string ExtMime(const std::string &filename) {
         size_t pos = filename.find_last_of('.');
         if (pos == std::string::npos) {
             return "application/octet-stream";
@@ -154,7 +154,7 @@ public:
         return it->second;
     }
 
-    static bool IsDir(std::string_view &filename) {
+    static bool IsDir(const std::string &filename) {
         struct stat st{};
         int res = stat(filename.data(), &st);
         if (res < 0) {
@@ -163,7 +163,7 @@ public:
         return S_ISDIR(st.st_mode);
     }
 
-    static bool IsRegular(std::string_view &filename) {
+    static bool IsRegular(const std::string &filename) {
         struct stat st{};
         int res = stat(filename.data(), &st);
         if (res < 0) {
@@ -172,7 +172,7 @@ public:
         return S_ISREG(st.st_mode);
     }
 
-    static bool ValidPath(std::string &path) {
+    static bool ValidPath(const std::string &path) {
         int level{0};
         auto tmp = Split(path, "\\");
         for (auto &p: tmp) {
