@@ -47,8 +47,8 @@ private:
         conn->SetAnyEventCallback(event_cb_);
 
         conn->SetSrvClosedCallback([this](auto && PH1) { RemoveConn(std::forward<decltype(PH1)>(PH1)); });
-        if (enable_release_) conn->EnableInactiveRelease(timeout_);
-        conn->Established();
+        if (enable_release_) conn->EnableRelease(timeout_);
+        conn->Establish();
         conns_.insert({next_id_, conn});
     }
 
