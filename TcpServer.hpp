@@ -5,88 +5,80 @@
 #include "Acceptor.hpp"
 #include "ThreadPool.hpp"
 #include "Connection.hpp"
+
 using PtrConnection = Connection::PtrConnection;
 using Functor = std::function<void()>;
 
 class TcpServer {
 private:
-    uint64_t next_id_{0};
-    int port_;
-    int timeout_{0};
-    bool enable_release_{false};
+    uint64_t _next_id;      //这是一个自动增长的连接ID，
+    int _port;
+    int _timeout;           //这是非活跃连接的统计时间---多长时间无通信就是非活跃连接
+    bool _enable_inactive_release;//是否启动了非活跃连接超时销毁的判断标志
+    EventLoop _baseloop;    //这是主线程的EventLoop对象，负责监听事件的处理
+    Acceptor _acceptor;    //这是监听套接字的管理对象
+    LoopThreadPool _pool;   //这是从属EventLoop线程池
+    std::unordered_map<uint64_t, PtrConnection> _conns;//保存管理所有连接对应的shared_ptr对象
 
-    EventLoop base_loop_{};
-    Acceptor acceptor_;
-    ThreadPool thread_pool_;
-    std::unordered_map<uint64_t, PtrConnection> conns_;
-
-    using ConnectionCb = std::function<void(const PtrConnection &)>;
-    ConnectionCb conn_cb_;
-
-    using MsgCb = std::function<void(const PtrConnection &, Buffer &)>;
-    MsgCb msg_cb_;
-
-    using CloseCb = std::function<void(const PtrConnection &)>;
-    CloseCb close_cb_;
-
-    using Anycb = std::function<void(const PtrConnection &)>;
-    Anycb event_cb_;
-
+    using ConnectedCallback = std::function<void(const PtrConnection&)>;
+    using MessageCallback = std::function<void(const PtrConnection&, Buffer *)>;
+    using ClosedCallback = std::function<void(const PtrConnection&)>;
+    using AnyEventCallback = std::function<void(const PtrConnection&)>;
+    using Functor = std::function<void()>;
+    ConnectedCallback _connected_callback;
+    MessageCallback _message_callback;
+    ClosedCallback _closed_callback;
+    AnyEventCallback _event_callback;
 private:
-    void RunTimerInLoop(const Functor &cb, int timeout) {
-        ++next_id_;
-        base_loop_.TimerAdd(next_id_, timeout, cb);
+    void RunAfterInLoop(const Functor &task, int delay) {
+        _next_id++;
+        _baseloop.TimerAdd(_next_id, delay, task);
     }
-
-    void NewConn(int fd) {
-        ++next_id_;
-        auto conn = std::make_shared<Connection>(thread_pool_.NextLoop(), next_id_, fd);
-        conn->SetMessageCallback(msg_cb_);
-        conn->SetClosedCallback(close_cb_);
-        conn->SetConnectedCallback(conn_cb_);
-        conn->SetAnyEventCallback(event_cb_);
-
-        conn->SetSrvClosedCallback([this](auto && PH1) { RemoveConn(std::forward<decltype(PH1)>(PH1)); });
-        if (enable_release_) conn->EnableRelease(timeout_);
-        conn->Establish();
-        conns_.insert({next_id_, conn});
+    //为新连接构造一个Connection进行管理
+    void NewConnection(int fd) {
+        _next_id++;
+        PtrConnection conn(new Connection(_pool.NextLoop(), _next_id, fd));
+        conn->SetMessageCallback(_message_callback);
+        conn->SetClosedCallback(_closed_callback);
+        conn->SetConnectedCallback(_connected_callback);
+        conn->SetAnyEventCallback(_event_callback);
+        conn->SetSrvClosedCallback(std::bind(&TcpServer::RemoveConnection, this, std::placeholders::_1));
+        if (_enable_inactive_release) conn->EnableInactiveRelease(_timeout);//启动非活跃超时销毁
+        conn->Established();//就绪初始化
+        _conns.insert(std::make_pair(_next_id, conn));
     }
-
-    void RemoveConnInLoop(const PtrConnection &conn) {
-        uint64_t id = conn->Id();
-        auto it = conns_.find(id);
-        if (it != conns_.end()) {
-            conns_.erase(it);
+    void RemoveConnectionInLoop(const PtrConnection &conn) {
+        int id = conn->Id();
+        auto it = _conns.find(id);
+        if (it != _conns.end()) {
+            _conns.erase(it);
         }
     }
-
-    void RemoveConn(const PtrConnection &conn) {
-        base_loop_.RunInLoop([this, &conn] { RemoveConnInLoop(conn); });
+    //从管理Connection的_conns中移除连接信息
+    void RemoveConnection(const PtrConnection &conn) {
+        _baseloop.RunInLoop(std::bind(&TcpServer::RemoveConnectionInLoop, this, conn));
     }
-
 public:
-    explicit TcpServer(int port): port_(port), acceptor_(&base_loop_, port), thread_pool_(&base_loop_) {
-        acceptor_.SetAcceptCallback([this](int && PH1) { NewConn(PH1); });
-        acceptor_.Listen();
+    TcpServer(int port):
+            _port(port),
+            _next_id(0),
+            _enable_inactive_release(false),
+            _acceptor(&_baseloop, port),
+            _pool(&_baseloop) {
+        _acceptor.SetAcceptCallback(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1));
+        _acceptor.Listen();//将监听套接字挂到baseloop上
     }
-
-    void RunTimer(const Functor &cb, int timeout) {
-        base_loop_.RunInLoop([this, &cb, &timeout] { RunTimerInLoop(cb, timeout); });
+    void SetThreadCount(int count) { return _pool.SetThreadCount(count); }
+    void SetConnectedCallback(const ConnectedCallback&cb) { _connected_callback = cb; }
+    void SetMessageCallback(const MessageCallback&cb) { _message_callback = cb; }
+    void SetClosedCallback(const ClosedCallback&cb) { _closed_callback = cb; }
+    void SetAnyEventCallback(const AnyEventCallback&cb) { _event_callback = cb; }
+    void EnableInactiveRelease(int timeout) { _timeout = timeout; _enable_inactive_release = true; }
+    //用于添加一个定时任务
+    void RunAfter(const Functor &task, int delay) {
+        _baseloop.RunInLoop(std::bind(&TcpServer::RunAfterInLoop, this, task, delay));
     }
-
-    void SetConnectedCallback(const ConnectionCb &cb) { conn_cb_ = cb; }
-    void SetMessageCallback(const MsgCb &cb) { msg_cb_ = cb; }
-    void SetClosedCallback(const CloseCb &cb) { close_cb_ = cb; }
-    void SetAnyEventCallback(const Anycb &cb) { event_cb_ = cb; }
-
-    void EnableRelease(int timeout) {
-        timeout_ = timeout;
-        enable_release_ = true;
-    }
-
-    void Start() {
-        base_loop_.Start();
-    }
+    void Start() { _pool.Create();  _baseloop.Start(); }
 };
 
 class NetWork {
@@ -97,3 +89,4 @@ public:
 };
 
 static NetWork net{};
+

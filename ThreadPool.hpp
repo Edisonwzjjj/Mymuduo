@@ -2,31 +2,31 @@
 
 #include "Thread.hpp"
 
-class ThreadPool {
+class LoopThreadPool {
 private:
-    int num_{0};
-    int next_idx_{0};
-
-    EventLoop *base_;
-    std::vector<std::unique_ptr<Thread>> threads_;
-    std::vector<EventLoop *> pools_;
-
+    int _thread_count;
+    int _next_idx;
+    EventLoop *_baseloop;
+    std::vector<LoopThread*> _threads;
+    std::vector<EventLoop *> _loops;
 public:
-    explicit ThreadPool(EventLoop *base, int num = 5): base_(base), num_(num) {
-        if (num > 0) {
-            threads_.resize(num_);
-            pools_.resize(num_);
-            for (int i = 0; i < num_; ++i) {
-                threads_.emplace_back(std::make_unique<Thread>());
-                pools_[i] = threads_[i]->GetLoop();
+    LoopThreadPool(EventLoop *baseloop):_thread_count(0), _next_idx(0), _baseloop(baseloop) {}
+    void SetThreadCount(int count) { _thread_count = count; }
+    void Create() {
+        if (_thread_count > 0) {
+            _threads.resize(_thread_count);
+            _loops.resize(_thread_count);
+            for (int i = 0; i < _thread_count; i++) {
+                _threads[i] = new LoopThread();
+                _loops[i] = _threads[i]->GetLoop();
             }
         }
     }
-
-    auto NextLoop() -> EventLoop * {
-        if (!num_) return base_;
-        next_idx_ = (next_idx_ + 1) % num_;
-        return pools_[next_idx_];
+    EventLoop *NextLoop() {
+        if (_thread_count == 0) {
+            return _baseloop;
+        }
+        _next_idx = (_next_idx + 1) % _thread_count;
+        return _loops[_next_idx];
     }
 };
-

@@ -19,21 +19,13 @@ add_executable(
         Thread.hpp
         ThreadPool.hpp
         TcpServer.hpp
-        http/Util.hpp
-        http/Request.hpp
-        http/Responce.hpp
-        http/Context.hpp
-        http/HttpServer.hpp
+        Server/echo.hpp
 )
 
 add_executable(
         client
-        client.cpp
+        Server/client.cpp
         Socket.hpp
-        http/Util.hpp
-        http/Request.hpp
-        http/Responce.hpp
-        http/Context.hpp
-        http/HttpServer.hpp
+        Server/echo.hpp
 )
 

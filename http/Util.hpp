@@ -22,8 +22,8 @@ std::unordered_map<std::string_view, std::string_view > MIME_MSG {
 
 class Util {
 public:
-    static std::vector<std::string_view> Split(const std::string &str, const std::string &sep) {
-        std::vector<std::string_view> res;
+    static std::vector<std::string> Split(const std::string &str, const std::string &sep) {
+        std::vector<std::string> res;
 
         size_t offset = 0;
         while (offset < str.size()) {
@@ -140,7 +140,7 @@ public:
         return it->second;
     }
 
-    static std::string ExtMime(const std::string &filename) {
+    static std::string_view ExtMime(const std::string &filename) {
         size_t pos = filename.find_last_of('.');
         if (pos == std::string::npos) {
             return "application/octet-stream";
