@@ -26,7 +26,7 @@ private:
     }
     int CreateServer(int port) {
         bool ret = _socket.CreateServer(port);
-        assert(ret == true);
+        assert(ret);
         return _socket.Fd();
     }
 public:

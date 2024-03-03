@@ -85,7 +85,6 @@ private:
                 return Release();
             }
         }
-        return;
     }
     //描述符触发挂断事件
     void HandleClose() {
@@ -216,7 +215,7 @@ public:
         //因此有可能执行的时候，data指向的空间有可能已经被释放了。
         Buffer buf;
         buf.WriteAndPush(data, len);
-        _loop->RunInLoop([this, &capture0 = (Buffer &) std::move(buf)] { SendInLoop(capture0); });
+        _loop->RunInLoop([this, &buf] { SendInLoop(buf); });
     }
     //提供给组件使用者的关闭接口--并不实际关闭，需要判断有没有数据待处理
     void Shutdown() {

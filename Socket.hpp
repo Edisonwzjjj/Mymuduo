@@ -15,9 +15,9 @@ private:
     int _sockfd;
 public:
     Socket():_sockfd(-1) {}
-    Socket(int fd): _sockfd(fd) {}
+    explicit Socket(int fd): _sockfd(fd) {}
     ~Socket() { Close(); }
-    int Fd() { return _sockfd; }
+    int Fd() const { return _sockfd; }
     //创建套接字
     bool Create() {
         // int socket(int domain, int type, int protocol)
@@ -142,9 +142,7 @@ public:
     void ReuseAddress() {
         // int setsockopt(int fd, int leve, int optname, void *val, int vallen)
         int val = 1;
-        setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, (void*)&val, sizeof(int));
-        val = 1;
-        setsockopt(_sockfd, SOL_SOCKET, SO_REUSEPORT, (void*)&val, sizeof(int));
+        setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, (void*)&val, sizeof(int));
     }
     //设置套接字阻塞属性-- 设置为非阻塞
     void NonBlock() {

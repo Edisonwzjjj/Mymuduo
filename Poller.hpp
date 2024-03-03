@@ -14,7 +14,7 @@
 class Poller {
 private:
     int _epfd;
-    struct epoll_event _evs[MAX_EPOLLEVENTS];
+    struct epoll_event _evs[MAX_EPOLLEVENTS]{};
     std::unordered_map<int, Channel *> _channels;
 private:
     //对epoll的直接操作

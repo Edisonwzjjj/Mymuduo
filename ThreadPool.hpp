@@ -10,7 +10,7 @@ private:
     std::vector<LoopThread*> _threads;
     std::vector<EventLoop *> _loops;
 public:
-    LoopThreadPool(EventLoop *baseloop):_thread_count(0), _next_idx(0), _baseloop(baseloop) {}
+    explicit LoopThreadPool(EventLoop *baseloop):_thread_count(0), _next_idx(0), _baseloop(baseloop) {}
     void SetThreadCount(int count) { _thread_count = count; }
     void Create() {
         if (_thread_count > 0) {

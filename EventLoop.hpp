@@ -34,7 +34,6 @@ public:
         for (auto &f : functor) {
             f();
         }
-        return ;
     }
     static int CreateEventFd() {
         int efd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
@@ -55,11 +54,10 @@ public:
             ERR_LOG("READ EVENTFD FAILED!");
             abort();
         }
-        return ;
     }
     void WeakUpEventFd() {
         uint64_t val = 1;
-        int ret = write(_event_fd, &val, sizeof(val));
+        ssize_t ret = write(_event_fd, &val, sizeof(val));
         if (ret < 0) {
             if (errno == EINTR) {
                 return;
@@ -67,12 +65,11 @@ public:
             ERR_LOG("READ EVENTFD FAILED!");
             abort();
         }
-        return ;
     }
 public:
     EventLoop():_thread_id(std::this_thread::get_id()),
                 _event_fd(CreateEventFd()),
-                _event_channel(new Channel(this, _event_fd)),
+                _event_channel(std::make_unique<Channel>(this, _event_fd)),
                 _timer_wheel(this) {
         //给eventfd添加可读事件回调函数，读取eventfd事件通知次数
         _event_channel->SetReadCallback([this] { ReadEventfd(); });
@@ -80,8 +77,8 @@ public:
         _event_channel->EnableRead();
     }
     //三步走--事件监控-》就绪事件处理-》执行任务
-    void Start() {
-        while(1) {
+     void Start() {
+        while(true) {
             //1. 事件监控，
             std::vector<Channel *> actives;
             _poller.Poll(&actives);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../TcpServer.hpp"
+#include "TcpServer.hpp"
 
 class Echo{
     private:
